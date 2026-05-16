@@ -1,0 +1,8 @@
+*.elc
+*~
+\#*\#
+.DS_Store
+osc_test.el
+baks/
+README.html
+README.md

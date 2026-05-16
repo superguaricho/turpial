@@ -1,0 +1,94 @@
+#+TITLE: Turpial
+#+AUTHOR: Numa Tortolero
+#+DESCRIPTION: An Emacs Lisp ecosystem for SuperCollider synthesis and Live Coding.
+
+[[file:turpial.jpg]]
+
+#+BEGIN_QUOTE
+/The Turpial (Icterus icterus) is a small bird with intense yellow and brilliant black plumage, known for its melodious song and as the official symbol of Venezuelan fauna./
+#+END_QUOTE
+
+*Turpial* is a live coding and algorithmic composition environment developed entirely in Emacs Lisp.
+It allows you to interact with the SuperCollider synthesis server (=scsynth=) without leaving Emacs, providing a seamless bridge between Lisp's symbolic power and SuperCollider's audio engine.
+
+* Objectives
+The project aims to provide a fully integrated musical environment within Emacs, focusing on:
+1. **Synth Design in Elisp**: A DSL that compiles Lisp expressions into binary =SynthDefs= for SuperCollider, removing the need for =sclang=.
+2. **Pattern-based Sequencing**: A mini-notation engine (inspired by TidalCycles) to sequence sounds using strings like ="bd*4 sd*2"=.
+3. **Server Orchestration**: Tools to boot, monitor, and manage the =scsynth= process and OSC traffic directly from Emacs buffers.
+4. **Asynchronous Control**: Low-latency scheduling for complex melodic and rhythmic structures.
+
+* Project Structure
+- ~turpial.el~ :: The main entry point. Contains the pattern parser (mini-notation), the scheduler, and the "orbit" API (~d1~, ~d2~, etc.).
+- ~turpial-dsl.el~ :: The Domain Specific Language for defining instruments. It handles the high-level syntax for UGens, Envelopes, and compilation.
+- ~turpial-scsynth.el~ :: Manages the =scsynth= process, including booting, quitting, and providing a real-time OSC monitor buffer. Features automatic Jack connection and auto-closing windows.
+- ~turpial-osc.el~ :: Low-level OSC communication layer. Implements a bidirectional client/server architecture for robust status tracking and "panic" controls.
+- ~turpial-seq.el~ :: An asynchronous sequencer for list-based property patterns (ideal for melodies).
+- ~turpial-hardcore.el~ :: Binary helpers for low-level SCgf (SuperCollider Graph Format) construction.
+- ~turpial-dsl-tests.el~ :: A comprehensive playground and tutorial file with examples of FM, Acid, and Granular synthesis.
+- ~turpial-workstream.el~ :: An interactive tutorial designed for beginners to learn Turpial step-by-step.
+
+* Requirements
+- Emacs 27.1+
+- SuperCollider (specifically =scsynth=)
+- Emacs packages: =sclang=, =osc= (version 0.4+ recommended).
+
+* Installation
+
+** Modern Emacs (29+) with =use-package=
+If you are using a recent version of Emacs, you can install Turpial directly from GitHub using the =:vc= keyword:
+
+#+BEGIN_SRC elisp
+(use-package turpial
+  :vc (:url "https://github.com/superguaricho/turpial")
+  :config
+  ;; Optional: add your custom configuration here
+  )
+#+END_SRC
+
+** Manual Installation
+1. Clone the repository to your local machine:
+   #+BEGIN_SRC bash
+   git clone https://github.com/superguaricho/turpial.git ~/.emacs.d/site-lisp/turpial
+   #+END_SRC
+
+2. Add the directory to your =load-path= and require the package in your =init.el= or =.emacs=:
+   #+BEGIN_SRC elisp
+   (add-to-list 'load-path "~/.emacs.d/site-lisp/turpial")
+   (require 'turpial)
+   #+END_SRC
+
+* Workflow
+Follow this lifecycle to start making music with Turpial:
+
+** 1. Initialization
+First, load the environment and boot the audio engine:
+- Load the project: ~(require 'turpial)~.
+- Boot the server: ~M-x sc-boot~ (or ~turpial-scsynth-boot~).
+  - The engine will poll the server via OSC (=/status=) to confirm it is ready.
+  - Once confirmed, it will **automatically and asynchronously** connect SuperCollider to Jack.
+- Monitor: The =*scsynth-monitor*= buffer opens automatically, showing both outgoing and incoming (replies) OSC traffic.
+
+** 2. Synthesis Design
+Define your instruments using the DSL. These are compiled and sent to the server instantly:
+#+BEGIN_SRC elisp
+(turpial-dsl-synthdef "my_synth"
+  :params '(("freq" . 440.0) ("amp" . 0.3))
+  :nodes '((SinOsc :ar ("freq" 0.0) :as osc)
+           (Out :ar (0.0 osc) :outputs 0)))
+#+END_SRC
+
+** 3. Live Coding Performance
+Use the "d-functions" to trigger patterns. Evaluation happens on the fly:
+- **Start a pattern**: ~(d1 "my_synth*4" :freq 220)~
+- **Modify in real-time**: Change the string to ~(d1 "my_synth [~ my_synth]*2")~ and re-evaluate.
+- **Silence an orbit**: ~(d1 silence)~
+- **Stop everything**: ~M-x hush~ or ~M-x turpial-osc-panic~.
+
+** 4. Shutdown
+- **Quit the server**: ~C-c s q~ (or ~M-x turpial-scsynth-quit~).
+  - This stops the =scsynth= process and cleans up the OSC client.
+  - The monitor window will **automatically close** after a 3-second delay.
+
+* License
+GNU General Public License (GPLv3)
