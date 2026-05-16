@@ -3,7 +3,7 @@
 ;; Filename: turpial.el
 ;; Description: DSL in Elisp to generate SuperCollider patterns
 ;; Author: Numa Tortolero
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "27.1") (osc "0.4") (sclang))
 ;; URL: https://github.com/superguaricho/turpial
 ;; Keywords: Emacs, SuperCollider, SuperDirt, OSC, TidalCycles
